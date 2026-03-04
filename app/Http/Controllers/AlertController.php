@@ -198,6 +198,46 @@ class AlertController extends Controller
     }
 }
 
+    // Delete an incident report (admin)
+    public function destroy(Request $request, $id)
+    {
+        if (!auth()->check() || (auth()->user()->role ?? null) !== 'admin') {
+            abort(403);
+        }
+
+        try {
+            $incident = IncidentReport::with(['photos'])->findOrFail($id);
+
+            $photoPaths = $incident->photos
+                ->pluck('photo_path')
+                ->filter()
+                ->values()
+                ->all();
+
+            $thumbnailPaths = $incident->photos
+                ->pluck('thumbnail_path')
+                ->filter()
+                ->values()
+                ->all();
+
+            // Hard-delete so related records cascade and don't linger (incident_reports uses SoftDeletes)
+            $incident->forceDelete();
+
+            // Best-effort cleanup of stored files
+            if (!empty($photoPaths)) {
+                Storage::disk('public')->delete($photoPaths);
+            }
+            if (!empty($thumbnailPaths)) {
+                Storage::disk('public')->delete($thumbnailPaths);
+            }
+
+            return redirect()->route('incidents.index')->with('success', 'Incident report deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete incident: ' . $e->getMessage());
+            return redirect()->route('incidents.show', $id)->with('error', 'Failed to delete incident report.');
+        }
+    }
+
     // Get incident statistics (API endpoint)
     public function getStatistics()
     {
