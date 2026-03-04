@@ -176,16 +176,23 @@
           <p class="text-gray-600">Sign in to access your Pasong Tamo dashboard</p>
         </div>
 
-        <!-- Display Error Messages -->
-        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm hidden" id="errorMessage">
-          <!-- Error messages will be displayed here -->
-        </div>
+        @if ($errors->any())
+          <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            <ul class="list-disc pl-5 space-y-1">
+              @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
 
-        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm hidden" id="successMessage">
-          <!-- Success messages will be displayed here -->
-        </div>
+        @if (session('success'))
+          <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            {{ session('success') }}
+          </div>
+        @endif
 
-        <form method="POST" action="{{ url()->current() }}" class="space-y-6">
+        <form method="POST" action="{{ route('authenticate', [], false) }}" class="space-y-6">
           @csrf
 
           <!-- Email / Username -->
