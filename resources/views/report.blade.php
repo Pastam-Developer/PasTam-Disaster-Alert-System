@@ -84,7 +84,7 @@
     </style>
     
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
             <div class="w-16 h-16 mx-auto mb-6">
                 <div class="spinner rounded-full h-full w-full border-b-2 border-blue-600"></div>
@@ -452,7 +452,7 @@
     </main>
 
     <!-- Success Modal -->
-    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div id="successModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
             <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-check text-green-600 text-3xl"></i>
@@ -781,19 +781,47 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const preview = document.createElement('div');
-                    preview.className = 'image-preview relative rounded-xl overflow-hidden group h-40';
-                    preview.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                            <button type="button" class="remove-photo transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
+                    preview.className = 'image-preview relative rounded-xl overflow-hidden group h-40 bg-gray-100';
+
+                    const img = document.createElement('img');
+                    img.alt = 'Photo preview';
+                    img.className = 'w-full h-full object-cover opacity-0 transition-opacity duration-200';
+
+                    const loader = document.createElement('div');
+                    loader.className = 'absolute inset-0 flex items-center justify-center bg-black/10';
+                    loader.innerHTML = '<i class="fas fa-spinner fa-spin text-white text-2xl"></i>';
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'remove-photo transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center';
+                    removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+
+                    overlay.appendChild(removeBtn);
+                    preview.appendChild(img);
+                    preview.appendChild(loader);
+                    preview.appendChild(overlay);
                     previewContainer.appendChild(preview);
+
+                    img.addEventListener('load', function() {
+                        img.classList.remove('opacity-0');
+                        img.classList.add('opacity-100');
+                        loader.remove();
+                    });
+
+                    img.addEventListener('error', function() {
+                        loader.classList.remove('bg-black/10');
+                        loader.classList.add('bg-red-600/70');
+                        loader.innerHTML = '<div class="text-white text-xs font-semibold px-2 text-center">Preview failed</div>';
+                    });
+
+                    // Set src after handlers to avoid missing fast load events
+                    img.src = String(e.target.result || '');
                     
                     // Add remove functionality
-                    preview.querySelector('.remove-photo').addEventListener('click', function() {
+                    removeBtn.addEventListener('click', function() {
                         const index = Array.from(previewContainer.children).indexOf(preview);
                         reportData.photos.splice(index, 1);
                         preview.remove();
