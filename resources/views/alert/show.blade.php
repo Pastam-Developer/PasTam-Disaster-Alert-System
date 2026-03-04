@@ -11,7 +11,7 @@
         <h1 class="text-3xl font-bold text-gray-800">Incident Details</h1>
 
         @if(auth()->check() && (auth()->user()->role ?? null) === 'admin')
-            <form id="deleteIncidentForm" method="POST" action="{{ route('incidents.destroy', $incident->id) }}" class="ml-auto">
+            <form id="deleteIncidentForm" method="POST" action="{{ route('incidents.destroy', $incident->id, false) }}" class="ml-auto">
                 @csrf
                 @method('DELETE')
                 <button type="button" id="deleteIncidentButton" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
