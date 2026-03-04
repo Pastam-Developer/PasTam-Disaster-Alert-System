@@ -25,11 +25,19 @@ class IncidentPhoto extends Model
 
     public function getPhotoUrlAttribute()
     {
-        return Storage::url($this->photo_path);
+        if (!$this->photo_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->photo_path);
     }
 
     public function getThumbnailUrlAttribute()
     {
-        return $this->thumbnail_path ? Storage::url($this->thumbnail_path) : $this->photo_url;
+        if ($this->thumbnail_path) {
+            return Storage::disk('public')->url($this->thumbnail_path);
+        }
+
+        return $this->photo_url;
     }
 }
