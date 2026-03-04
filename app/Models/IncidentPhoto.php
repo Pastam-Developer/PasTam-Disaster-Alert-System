@@ -29,13 +29,15 @@ class IncidentPhoto extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->photo_path);
+        // Use a relative URL to avoid mixed-content issues when behind a proxy
+        // and to avoid relying on APP_URL for correct scheme/host.
+        return '/storage/' . ltrim($this->photo_path, '/');
     }
 
     public function getThumbnailUrlAttribute()
     {
         if ($this->thumbnail_path) {
-            return Storage::disk('public')->url($this->thumbnail_path);
+            return '/storage/' . ltrim($this->thumbnail_path, '/');
         }
 
         return $this->photo_url;
