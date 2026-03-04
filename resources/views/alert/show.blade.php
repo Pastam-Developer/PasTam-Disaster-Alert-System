@@ -143,11 +143,11 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         @foreach($incident->photos as $photo)
                         <div class="relative group">
-                            <img src="{{ Storage::url($photo->photo_path) }}" 
+                            <img src="{{ $photo->photo_url }}" 
                                  alt="Incident photo" 
                                  class="w-full h-48 object-cover rounded-lg">
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-lg transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <a href="{{ Storage::url($photo->photo_path) }}" 
+                                <a href="{{ $photo->photo_url }}" 
                                    target="_blank" 
                                    class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg">
                                     <i class="fas fa-expand"></i>
