@@ -9,6 +9,16 @@
             <i class="fas fa-arrow-left"></i> Back to Reports
         </a>
         <h1 class="text-3xl font-bold text-gray-800">Incident Details</h1>
+
+        @if(auth()->check() && (auth()->user()->role ?? null) === 'admin')
+            <form id="deleteIncidentForm" method="POST" action="{{ route('incidents.destroy', $incident->id) }}" class="ml-auto">
+                @csrf
+                @method('DELETE')
+                <button type="button" id="deleteIncidentButton" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-trash mr-2"></i>Delete Report
+                </button>
+            </form>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -227,6 +237,25 @@
 </div>
 
 <script>
+const deleteBtn = document.getElementById('deleteIncidentButton');
+if (deleteBtn) {
+    deleteBtn.addEventListener('click', function() {
+        Swal.fire({
+            title: 'Delete this report?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete it'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteIncidentForm').submit();
+            }
+        });
+    });
+}
+
 document.getElementById('updateStatusForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
