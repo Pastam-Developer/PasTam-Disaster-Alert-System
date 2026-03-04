@@ -100,6 +100,9 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
     
     // Show - specific incident details
     Route::get('/admin/incidents/{id}', [AlertController::class, 'show'])->name('incidents.show');
+
+    // Delete - remove an incident report
+    Route::delete('/admin/incidents/{id}', [AlertController::class, 'destroy'])->name('incidents.destroy');
     
     // Update status - patch method for updating
     Route::patch('/admin/incidents/{id}/status', [AlertController::class, 'updateStatus'])->name('incidents.update-status');
