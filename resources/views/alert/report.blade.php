@@ -44,7 +44,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <form method="GET" action="{{ route('incidents.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form method="GET" action="{{ route('incidents.index', [], false) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
@@ -86,7 +86,7 @@
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
                     <i class="fas fa-filter mr-2"></i> Filter
                 </button>
-                <a href="{{ route('incidents.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">
+                <a href="{{ route('incidents.index', [], false) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">
                     <i class="fas fa-times mr-2"></i> Clear
                 </a>
             </div>
