@@ -17,7 +17,7 @@
         </div>
 
         <div class="flex items-center">
-            <form method="GET" action="{{ route('incidents.index') }}" class="relative mr-4 hidden md:block">
+            <form method="GET" action="{{ route('incidents.index', [], false) }}" class="relative mr-4 hidden md:block">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-search text-gray-400"></i>
                 </div>
@@ -59,13 +59,13 @@
                     <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
                         <div class="flex items-center justify-between">
                             <span class="font-semibold text-gray-800">Pending Reports</span>
-                            <a href="{{ route('incidents.index', ['status' => 'pending']) }}" class="text-sm text-blue-600 hover:text-blue-800">View all</a>
+                            <a href="{{ route('incidents.index', ['status' => 'pending'], false) }}" class="text-sm text-blue-600 hover:text-blue-800">View all</a>
                         </div>
                     </div>
                     <div class="max-h-96 overflow-y-auto">
                         @forelse($pendingNotifications as $incident)
                             <a
-                                href="{{ route('incidents.show', $incident->id) }}"
+                                href="{{ route('incidents.show', $incident->id, false) }}"
                                 class="block px-4 py-3 hover:bg-gray-50"
                                 role="menuitem"
                             >
