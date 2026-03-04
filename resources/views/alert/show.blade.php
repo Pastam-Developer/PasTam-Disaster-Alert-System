@@ -262,7 +262,7 @@ document.getElementById('updateStatusForm').addEventListener('submit', async fun
     const formData = new FormData(this);
     
     try {
-        const response = await fetch('{{ route("incidents.update-status", $incident->id) }}', {
+        const response = await fetch('{{ route("incidents.update-status", $incident->id, false) }}', {
             method: 'PATCH',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
