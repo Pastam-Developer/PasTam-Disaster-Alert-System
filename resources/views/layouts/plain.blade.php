@@ -33,6 +33,15 @@
         .nav-item:hover {
             transform: translateY(-2px);
         }
+
+        /* Prevent mobile browsers from showing a blue tap-highlight on the brand link */
+        .brand-link {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .brand-link .brand-text {
+            user-select: none;
+            -webkit-user-select: none;
+        }
         .mobile-menu {
             transition: max-height 0.3s ease-out;
             overflow: hidden;
@@ -49,7 +58,7 @@
             <div class="flex justify-between items-center">
                 
                 <!-- Logo (clickable as Home) -->
-                <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
+                <a href="/" class="brand-link flex items-center hover:opacity-80 transition-opacity rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white">
                     <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center mr-3">
                         <img
                             src="{{ asset('images/tamo.jpg') }}"
@@ -57,7 +66,7 @@
                             class="w-full h-full object-cover"
                         >
                     </div>
-                    <div>
+                    <div class="brand-text">
                         <h1 class="text-xl font-bold text-blue-700">Pasong Tamo Disaster Alert System</h1>
                         <p class="text-xs text-gray-600">Local Government Unit</p>
                     </div>
