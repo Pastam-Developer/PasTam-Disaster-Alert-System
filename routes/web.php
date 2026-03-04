@@ -12,11 +12,22 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 /*
 |--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
+// Fallback storage file serving (useful on hosts where symlinks/static serving are unreliable)
+Route::get('/storage/{path}', function (string $path) {
+  if (!Storage::disk('public')->exists($path)) {
+    abort(404);
+  }
+
+  return Storage::disk('public')->response($path);
+})->where('path', '.*');
+
 // Route::middleware(['auth',Verify2FAMiddleware::class])->group(function(){
 //     Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
 //     Route::post('/two-factor', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
