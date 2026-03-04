@@ -181,6 +181,46 @@
                 mainContent.classList.add('main-content-sidebar-open');
             }
         });
+
+        // Notifications dropdown
+        document.addEventListener('DOMContentLoaded', function () {
+            const button = document.getElementById('notificationsButton');
+            const dropdown = document.getElementById('notificationsDropdown');
+
+            if (!button || !dropdown) return;
+
+            const close = () => {
+                dropdown.classList.add('hidden');
+                button.setAttribute('aria-expanded', 'false');
+            };
+
+            const toggle = () => {
+                const isHidden = dropdown.classList.contains('hidden');
+                if (isHidden) {
+                    dropdown.classList.remove('hidden');
+                    button.setAttribute('aria-expanded', 'true');
+                } else {
+                    close();
+                }
+            };
+
+            button.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggle();
+            });
+
+            dropdown.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            document.addEventListener('click', function () {
+                close();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') close();
+            });
+        });
     </script>
 
     @stack('scripts')
