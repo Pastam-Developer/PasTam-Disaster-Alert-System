@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
    ->withMiddleware(function (Middleware $middleware) {
+       // Railway terminates TLS at the proxy. Trust proxy headers so
+       // URL generation, scheme detection, and secure cookies behave correctly.
+       $middleware->trustProxies(at: '*');
+
         //
         $middleware->alias([
             'auth.user' => PreventBackHistory::class,
