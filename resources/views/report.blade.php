@@ -485,6 +485,7 @@
                 <i class="fas fa-phone mr-2"></i> Call 911
             </div>
             <p class="text-gray-300">For emergencies requiring police, fire, or medical assistance</p>
+            <p class="text-gray-400 text-sm mt-4">Developer: Sid Anajao</p>
         </div>
     </footer>
 
