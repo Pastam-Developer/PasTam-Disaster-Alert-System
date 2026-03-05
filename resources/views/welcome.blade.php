@@ -194,7 +194,7 @@
     </style>
 <header 
     class="bg-cover bg-center shadow-sm min-h-[60vh] flex items-center"
-    style="background-image: url('{{ asset('images/pasong.jpg') }}');"
+    style="background-image: url('{{ asset('images/pasong.png') }}');"
 >
 </header>
  <!-- Announcement Modal -->
