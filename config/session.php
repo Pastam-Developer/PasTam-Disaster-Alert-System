@@ -20,7 +20,7 @@ return [
 
     // Default to file-based sessions to avoid hard dependency on a DB-backed
     // `sessions` table in fresh/local setups.
-    'driver' => env('SESSION_DRIVER', 'file'),
+    'driver' => env('SESSION_DRIVER', 'database'),
 
     /*
     |--------------------------------------------------------------------------
