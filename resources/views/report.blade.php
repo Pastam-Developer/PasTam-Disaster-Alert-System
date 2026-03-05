@@ -916,14 +916,17 @@
         document.getElementById('submitReport').addEventListener('click', async function() {
             const submitButton = this;
             const originalText = submitButton.innerHTML;
-            
-            // Show loading overlay
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            
-            // Disable button and show loading
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            // Always show/hide loader + restore button state, even if anything throws.
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
-            
+            if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+
+            const requestTimeoutMs = 30000;
+            const abortController = new AbortController();
+            const abortTimeout = setTimeout(() => abortController.abort(), requestTimeoutMs);
+
             try {
                 // Get optional contact info
                 reportData.userName = document.getElementById('userNameInput').value;
@@ -945,8 +948,11 @@
                 formData.append('reporter_phone', reportData.userPhone);
                 
                 // Add CSRF token
-                const csrfToken = document.querySelector('input[name="_token"]').value;
-                formData.append('_token', csrfToken);
+                const csrfInput = document.querySelector('input[name="_token"]');
+                if (!csrfInput || !csrfInput.value) {
+                    throw new Error('Missing CSRF token');
+                }
+                formData.append('_token', csrfInput.value);
                 
                 // Add photos
                 reportData.photos.forEach((photo, index) => {
@@ -960,15 +966,20 @@
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
-                    }
+                    },
+                    signal: abortController.signal
                 });
-                
-                const result = await response.json();
-                
-                // Hide loading overlay
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                
-                if (response.ok && result.success) {
+
+                const contentType = response.headers.get('content-type') || '';
+                let result = null;
+                if (contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(text || `Unexpected response (HTTP ${response.status})`);
+                }
+
+                if (response.ok && result && result.success) {
                     // Update report ID display
                     const reportId = result.data.report_id || `REP-${Date.now().toString().slice(-8)}`;
                     document.getElementById('reportIdDisplay').textContent = reportId;
@@ -979,30 +990,29 @@
                     console.log('Report submitted successfully:', result.data);
                 } else {
                     // Handle validation errors
-                    if (result.errors) {
+                    if (result && result.errors) {
                         let errorMessages = [];
                         Object.values(result.errors).forEach(error => {
                             errorMessages.push(...error);
                         });
                         showNotification(errorMessages.join('<br>'), 'error');
                     } else {
-                        showNotification(result.message || 'Failed to submit report. Please try again.', 'error');
+                        showNotification((result && result.message) ? result.message : 'Failed to submit report. Please try again.', 'error');
                     }
-                    
-                    // Re-enable button
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalText;
                 }
-                
             } catch (error) {
                 console.error('Submission error:', error);
-                
-                // Hide loading overlay
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                
-                showNotification('Network error. Please check your connection and try again.', 'error');
-                
-                // Re-enable button
+
+                if (error && (error.name === 'AbortError')) {
+                    showNotification('Submission timed out. Please try again (and consider submitting without photos if your connection is slow).', 'error');
+                } else if (error && error.message && error.message.includes('CSRF')) {
+                    showNotification('Session expired. Please refresh the page and submit again.', 'error');
+                } else {
+                    showNotification('Could not submit the report. Please try again.', 'error');
+                }
+            } finally {
+                clearTimeout(abortTimeout);
+                if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
             }
