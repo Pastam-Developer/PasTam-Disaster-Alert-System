@@ -740,22 +740,98 @@
             this.classList.remove('border-blue-500', 'bg-blue-50');
         });
         
-        uploadArea.addEventListener('drop', function(e) {
+        uploadArea.addEventListener('drop', async function(e) {
             e.preventDefault();
             this.classList.remove('border-blue-500', 'bg-blue-50');
             
             if (e.dataTransfer.files.length) {
-                handleFiles(e.dataTransfer.files);
+                await handleFiles(e.dataTransfer.files);
             }
         });
         
-        photoUpload.addEventListener('change', function(event) {
+        photoUpload.addEventListener('change', async function(event) {
             if (event.target.files.length) {
-                handleFiles(event.target.files);
+                await handleFiles(event.target.files);
             }
         });
-        
-        function handleFiles(files) {
+
+        async function downscaleImageToJpeg(file) {
+            const maxDimension = 1600;
+            const quality = 0.8;
+
+            // If the file is already reasonably small, keep it as-is.
+            if (file.size <= 1.5 * 1024 * 1024) {
+                return file;
+            }
+
+            try {
+                let sourceWidth;
+                let sourceHeight;
+                let drawSource;
+
+                if (typeof createImageBitmap !== 'undefined') {
+                    const bitmap = await createImageBitmap(file);
+                    sourceWidth = bitmap.width;
+                    sourceHeight = bitmap.height;
+                    drawSource = bitmap;
+                } else {
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(String(reader.result || ''));
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+
+                    const img = await new Promise((resolve, reject) => {
+                        const image = new Image();
+                        image.onload = () => resolve(image);
+                        image.onerror = reject;
+                        image.src = dataUrl;
+                    });
+
+                    sourceWidth = img.naturalWidth || img.width;
+                    sourceHeight = img.naturalHeight || img.height;
+                    drawSource = img;
+                }
+
+                const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+                const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+                const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+
+                const canvas = document.createElement('canvas');
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return file;
+
+                ctx.drawImage(drawSource, 0, 0, targetWidth, targetHeight);
+
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob(
+                        b => (b ? resolve(b) : reject(new Error('Image compression failed'))),
+                        'image/jpeg',
+                        quality
+                    );
+                });
+
+                // If compression didn't help, keep original.
+                if (!blob || blob.size >= file.size) {
+                    return file;
+                }
+
+                const safeBaseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+                return new File([blob], `${safeBaseName}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: file.lastModified || Date.now(),
+                });
+            } catch (e) {
+                console.warn('Photo downscale failed, using original file:', e);
+                return file;
+            }
+        }
+
+        async function handleFiles(files) {
             const fileArray = Array.from(files);
             
             // Check if total photos exceed 5
@@ -763,16 +839,26 @@
                 showNotification('You can only upload up to 5 photos total.', 'error');
                 return;
             }
-            
-            fileArray.forEach(file => {
+
+            for (const originalFile of fileArray) {
+                let file = originalFile;
                 if (!file.type.startsWith('image/')) {
                     showNotification(`${file.name} is not an image file. Please select image files only.`, 'error');
-                    return;
+                    continue;
                 }
-                
+
+                // Avoid extreme memory use on very large photos.
+                if (file.size > 15 * 1024 * 1024) {
+                    showNotification(`${file.name} is too large. Please choose a smaller photo.`, 'error');
+                    continue;
+                }
+
+                // Downscale/compress large photos to reduce upload stalls/timeouts.
+                file = await downscaleImageToJpeg(file);
+
                 if (file.size > 5 * 1024 * 1024) {
-                    showNotification(`${file.name} is too large. Please select files under 5MB.`, 'error');
-                    return;
+                    showNotification(`${file.name} is still too large after processing. Please choose a smaller photo.`, 'error');
+                    continue;
                 }
                 
                 // Add to reportData
@@ -833,7 +919,10 @@
                     updatePhotoCount();
                 };
                 reader.readAsDataURL(file);
-            });
+
+                // Give the UI a moment on large batches
+                await new Promise(r => setTimeout(r, 0));
+            }
             
             // Reset file input
             photoUpload.value = '';
@@ -918,16 +1007,23 @@
             const originalText = submitButton.innerHTML;
             const loadingOverlay = document.getElementById('loadingOverlay');
 
-            // Always show/hide loader + restore button state, even if anything throws.
+            // Always show/hide loader + restore button state.
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
             if (loadingOverlay) loadingOverlay.classList.remove('hidden');
 
-            const requestTimeoutMs = 30000;
-            const abortController = new AbortController();
-            const abortTimeout = setTimeout(() => abortController.abort(), requestTimeoutMs);
+            const requestTimeoutMs = 60000;
+            let abortController = null;
+            let abortTimeout = null;
+            let lastResponseStatus = null;
 
             try {
+                // Optional timeout support (older browsers may not have AbortController)
+                if (typeof AbortController !== 'undefined') {
+                    abortController = new AbortController();
+                    abortTimeout = setTimeout(() => abortController.abort(), requestTimeoutMs);
+                }
+
                 // Get optional contact info
                 reportData.userName = document.getElementById('userNameInput').value;
                 reportData.userPhone = document.getElementById('userPhoneInput').value;
@@ -956,7 +1052,9 @@
                 
                 // Add photos
                 reportData.photos.forEach((photo, index) => {
-                    formData.append(`photos[${index}]`, photo);
+                    if (photo instanceof File || photo instanceof Blob) {
+                        formData.append(`photos[${index}]`, photo);
+                    }
                 });
                 
                 // Submit via AJAX (use relative URL to avoid mixed-content issues on HTTPS)
@@ -967,8 +1065,10 @@
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
                     },
-                    signal: abortController.signal
+                    signal: abortController ? abortController.signal : undefined
                 });
+
+                lastResponseStatus = response.status;
 
                 const contentType = response.headers.get('content-type') || '';
                 let result = null;
@@ -1004,14 +1104,16 @@
                 console.error('Submission error:', error);
 
                 if (error && (error.name === 'AbortError')) {
-                    showNotification('Submission timed out. Please try again (and consider submitting without photos if your connection is slow).', 'error');
+                    showNotification('Upload timed out. Try again, or submit with fewer/smaller photos.', 'error');
+                } else if (lastResponseStatus === 413) {
+                    showNotification('Images are too large for the server. Please upload smaller photos (or fewer photos) and try again.', 'error');
                 } else if (error && error.message && error.message.includes('CSRF')) {
                     showNotification('Session expired. Please refresh the page and submit again.', 'error');
                 } else {
                     showNotification('Could not submit the report. Please try again.', 'error');
                 }
             } finally {
-                clearTimeout(abortTimeout);
+                if (abortTimeout) clearTimeout(abortTimeout);
                 if (loadingOverlay) loadingOverlay.classList.add('hidden');
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
