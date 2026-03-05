@@ -134,6 +134,7 @@
         <div class="container mx-auto px-4 text-center">
                 <p class="mb-2">© 2026 Pasong Tamo Management. All rights reserved.</p>
             <p class="text-gray-400 text-sm">Serving our community with care and dedication.</p>
+            <p class="text-gray-400 text-sm mt-2">Developer: Sid Anajao</p>
         </div>
     </footer>
 
