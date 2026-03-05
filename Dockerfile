@@ -9,6 +9,14 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
     docker-php-ext-install pdo pdo_mysql gd
 
+# Increase upload limits for incident photo submissions
+RUN { \
+        echo 'upload_max_filesize=12M'; \
+        echo 'post_max_size=20M'; \
+        echo 'memory_limit=256M'; \
+        echo 'max_execution_time=120'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
 WORKDIR /var/www/html
 
 # Copy application source
